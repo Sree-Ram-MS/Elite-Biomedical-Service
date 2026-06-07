@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit_biomedical_expense" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.biomedical.expense</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Expenses" name="biomedical_expenses">
+                    <field name="expense_ids" mode="list">
+                        <list string="Expenses" editable="bottom">
+                            <field name="name" readonly="True"/>
+                            <field name="date"/>
+                            <field name="user_id" widget="many2one_avatar_user" readonly="move_id != False"/>
+                            <field name="partner_id" readonly="move_id != False"/>
+                            <field name="expense_type_id" readonly="move_id != False"/>
+                            <field name="amount" sum="Total" readonly="move_id != False"/>
+                            <field name="currency_id" column_invisible="True"/>
+                            <field name="attachment" filename="attachment_name" widget="binary" readonly="move_id != False"/>
+                            <field name="attachment_name" column_invisible="True"/>
+                            <field name="move_id" widget="many2one" readonly="True"/>
+                            <field name="bill_state" widget="badge" decoration-success="bill_state == 'posted'" decoration-info="bill_state == 'draft'" decoration-danger="bill_state == 'cancel'"/>
+                            <field name="payment_state" widget="badge" decoration-success="payment_state == 'paid'" decoration-warning="payment_state in ('partial', 'in_payment')"/>
+                            <button name="action_create_vendor_bill" string="Create Bill" type="object" icon="fa-file-text-o" class="oe_highlight" column_invisible="parent.state == 'cancel'" invisible="move_id != False"/>
+                            <button name="action_view_vendor_bill" string="View Bill" type="object" icon="fa-eye" class="btn-secondary" invisible="move_id == False"/>
+                        </list>
+                    </field>
+                    <group class="oe_subtotal_footer oe_right" colspan="2" name="expense_total_footer">
+                        <field name="expense_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                    </group>
+                    <div class="clearfix"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

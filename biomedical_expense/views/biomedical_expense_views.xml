@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Expense List View -->
+    <record id="view_biomedical_expense_tree" model="ir.ui.view">
+        <field name="name">biomedical.expense.list</field>
+        <field name="model">biomedical.expense</field>
+        <field name="arch" type="xml">
+            <list string="Expenses" create="0" edit="0" delete="1">
+                <field name="name"/>
+                <field name="sale_order_id"/>
+                <field name="date"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="partner_id"/>
+                <field name="expense_type_id"/>
+                <field name="amount" sum="Total Amount"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="move_id" widget="many2one"/>
+                <field name="bill_state" widget="badge" decoration-success="bill_state == 'posted'" decoration-info="bill_state == 'draft'" decoration-danger="bill_state == 'cancel'"/>
+                <field name="payment_state" widget="badge" decoration-success="payment_state == 'paid'" decoration-warning="payment_state in ('partial', 'in_payment')"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Expense Form View -->
+    <record id="view_biomedical_expense_form" model="ir.ui.view">
+        <field name="name">biomedical.expense.form</field>
+        <field name="model">biomedical.expense</field>
+        <field name="arch" type="xml">
+            <form string="Expense" create="0">
+                <header>
+                    <button name="action_create_vendor_bill" string="Create Vendor Bill" type="object" class="oe_highlight" invisible="move_id != False"/>
+                    <button name="action_view_vendor_bill" string="View Vendor Bill" type="object" class="oe_highlight" invisible="move_id == False"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,billed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="sale_order_id" readonly="True"/>
+                            <field name="expense_type_id" readonly="move_id != False"/>
+                            <field name="amount" readonly="move_id != False"/>
+                            <field name="currency_id" invisible="True"/>
+                            <field name="date" readonly="move_id != False"/>
+                        </group>
+                        <group>
+                            <field name="user_id" readonly="move_id != False"/>
+                            <field name="partner_id" readonly="move_id != False"/>
+                            <field name="attachment" filename="attachment_name" readonly="move_id != False"/>
+                            <field name="attachment_name" invisible="True"/>
+                            <field name="move_id"/>
+                            <field name="bill_state" invisible="move_id == False"/>
+                            <field name="payment_state" invisible="move_id == False"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Expense Search View -->
+    <record id="view_biomedical_expense_search" model="ir.ui.view">
+        <field name="name">biomedical.expense.search</field>
+        <field name="model">biomedical.expense</field>
+        <field name="arch" type="xml">
+            <search string="Search Expenses">
+                <field name="name" string="Expense Ref"/>
+                <field name="sale_order_id"/>
+                <field name="user_id"/>
+                <field name="expense_type_id"/>
+                <filter string="My Expenses" name="my_expenses" domain="[('user_id', '=', uid)]"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Billed" name="billed" domain="[('state', '=', 'billed')]"/>
+                <group>
+                    <filter string="Sale Order" name="group_by_sale_order_id" context="{'group_by': 'sale_order_id'}"/>
+                    <filter string="User" name="group_by_user_id" context="{'group_by': 'user_id'}"/>
+                    <filter string="Expense Type" name="group_by_expense_type_id" context="{'group_by': 'expense_type_id'}"/>
+                    <filter string="Date" name="group_by_date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Expense Action -->
+    <record id="action_biomedical_expense" model="ir.actions.act_window">
+        <field name="name">Expenses</field>
+        <field name="res_model">biomedical.expense</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_biomedical_expense_search"/>
+        <field name="context">{'search_default_group_by_sale_order_id': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Expenses list
+            </p>
+            <p>
+                Expenses can only be created directly inside Sale Orders. Here you can view, group, and process them for payments.
+            </p>
+        </field>
+    </record>
+</odoo>
