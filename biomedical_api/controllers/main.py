@@ -1,10 +1,44 @@
 import json
 import logging
+import functools
 from odoo import http
 from odoo.http import request
 import odoo
 
 _logger = logging.getLogger(__name__)
+
+def validate_token(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # OPTIONS requests are preflight calls and should proceed unchecked to return headers
+        if request.httprequest.method == 'OPTIONS':
+            return func(*args, **kwargs)
+            
+        # Check authentication using session
+        if not request.session.uid:
+            return request.make_response(
+                json.dumps({'error': 'Unauthorized - Session expired or invalid'}),
+                headers=[
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', '*'),
+                ],
+                status=401
+            )
+            
+        # Check if the user is the public user
+        public_user = request.env.ref('base.public_user', raise_if_not_found=False)
+        if public_user and request.env.user.id == public_user.id:
+            return request.make_response(
+                json.dumps({'error': 'Unauthorized - Public user session'}),
+                headers=[
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', '*'),
+                ],
+                status=401
+            )
+            
+        return func(*args, **kwargs)
+    return wrapper
 
 class BiomedicalApiController(http.Controller):
 
@@ -163,6 +197,7 @@ class BiomedicalApiController(http.Controller):
             )
 
     @http.route('/api/sale_orders', type='http', auth='public', methods=['GET', 'OPTIONS'], csrf=False)
+    @validate_token
     def api_sale_orders(self, **kwargs):
         if request.httprequest.method == 'OPTIONS':
             return request.make_response(
@@ -174,30 +209,7 @@ class BiomedicalApiController(http.Controller):
                 ]
             )
 
-        # Check authentication using session
-        if not request.session.uid:
-            return request.make_response(
-                json.dumps({'error': 'Unauthorized - Session expired or invalid'}),
-                headers=[
-                    ('Content-Type', 'application/json'),
-                    ('Access-Control-Allow-Origin', '*'),
-                ],
-                status=401
-            )
-
         try:
-            # Check public user
-            public_user = request.env.ref('base.public_user', raise_if_not_found=False)
-            if public_user and request.env.user.id == public_user.id:
-                return request.make_response(
-                    json.dumps({'error': 'Unauthorized - Public user session'}),
-                    headers=[
-                        ('Content-Type', 'application/json'),
-                        ('Access-Control-Allow-Origin', '*'),
-                    ],
-                    status=401
-                )
-
             # Search sale orders for the authenticated user
             # Since request.env is configured with request.session.uid,
             # standard record rules automatically apply!
@@ -205,13 +217,28 @@ class BiomedicalApiController(http.Controller):
             
             orders_data = []
             for order in sale_orders:
+                lines = []
+                for line in order.order_line:
+                    lines.append({
+                        'id': line.id,
+                        'product_name': line.product_id.name,
+                        'quantity': line.product_uom_qty,
+                        'price_unit': line.price_unit,
+                        'price_subtotal': line.price_subtotal,
+                    })
                 orders_data.append({
                     'id': order.id,
                     'name': order.name,
                     'partner_name': order.partner_id.name,
                     'date_order': order.date_order.isoformat() if order.date_order else None,
                     'amount_total': order.amount_total,
+                    'amount_untaxed': order.amount_untaxed,
+                    'amount_tax': order.amount_tax,
+                    'salesperson': order.user_id.name or '',
+                    'payment_term': order.payment_term_id.name or '',
+                    'validity_date': order.validity_date.isoformat() if order.validity_date else None,
                     'state': order.state,
+                    'order_lines': lines,
                 })
                 
             return request.make_response(
@@ -234,6 +261,7 @@ class BiomedicalApiController(http.Controller):
 
 
     @http.route('/api/user/profile', type='http', auth='public', methods=['GET', 'POST', 'OPTIONS'], csrf=False)
+    @validate_token
     def api_user_profile(self, **kwargs):
         if request.httprequest.method == 'OPTIONS':
             return request.make_response(
@@ -245,30 +273,7 @@ class BiomedicalApiController(http.Controller):
                 ]
             )
 
-        # Check authentication using session
-        if not request.session.uid:
-            return request.make_response(
-                json.dumps({'error': 'Unauthorized - Session expired or invalid'}),
-                headers=[
-                    ('Content-Type', 'application/json'),
-                    ('Access-Control-Allow-Origin', '*'),
-                ],
-                status=401
-            )
-
         try:
-            # Check public user
-            public_user = request.env.ref('base.public_user', raise_if_not_found=False)
-            if public_user and request.env.user.id == public_user.id:
-                return request.make_response(
-                    json.dumps({'error': 'Unauthorized - Public user session'}),
-                    headers=[
-                        ('Content-Type', 'application/json'),
-                        ('Access-Control-Allow-Origin', '*'),
-                    ],
-                    status=401
-                )
-
             user = request.env.user
 
             if request.httprequest.method == 'POST':
@@ -304,6 +309,8 @@ class BiomedicalApiController(http.Controller):
                     partner_vals['website'] = body['website'].strip()
                 if 'function' in body:
                     partner_vals['function'] = body['function'].strip()
+                if 'image_1920' in body:
+                    partner_vals['image_1920'] = body['image_1920']
 
                 if partner_vals:
                     user.partner_id.write(partner_vals)
@@ -322,6 +329,7 @@ class BiomedicalApiController(http.Controller):
                 'zip': user.partner_id.zip or '',
                 'website': user.partner_id.website or '',
                 'function': user.partner_id.function or '',
+                'image_128': user.partner_id.image_128.decode('utf-8') if user.partner_id.image_128 else '',
             }
 
             return request.make_response(
@@ -333,6 +341,53 @@ class BiomedicalApiController(http.Controller):
             )
         except Exception as e:
             _logger.exception("Failed to fetch or update user profile")
+            return request.make_response(
+                json.dumps({'error': str(e)}),
+                headers=[
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', '*'),
+                ],
+                status=500
+            )
+
+    @http.route('/api/sale_order/<int:order_id>/pdf', type='http', auth='public', methods=['GET', 'OPTIONS'], csrf=False)
+    @validate_token
+    def api_sale_order_pdf(self, order_id, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return request.make_response(
+                '',
+                headers=[
+                    ('Access-Control-Allow-Origin', '*'),
+                    ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+                    ('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie'),
+                ]
+            )
+
+        try:
+            # Check if order exists and is readable by the user
+            order = request.env['sale.order'].browse(order_id)
+            if not order.exists():
+                return request.make_response(
+                    json.dumps({'error': 'Sale order not found'}),
+                    headers=[
+                        ('Content-Type', 'application/json'),
+                        ('Access-Control-Allow-Origin', '*'),
+                    ],
+                    status=404
+                )
+
+            # Generate PDF
+            pdf_content, _ = request.env['ir.actions.report']._render_qweb_pdf('sale.report_saleorder', [order_id])
+            
+            filename = f"Sale_Order_{order.name}.pdf"
+            headers = [
+                ('Content-Type', 'application/pdf'),
+                ('Content-Disposition', f'attachment; filename="{filename}"'),
+                ('Access-Control-Allow-Origin', '*'),
+            ]
+            return request.make_response(pdf_content, headers=headers)
+        except Exception as e:
+            _logger.exception("Failed to generate PDF for sale order")
             return request.make_response(
                 json.dumps({'error': str(e)}),
                 headers=[
