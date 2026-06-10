@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Report Action -->
+    <record id="action_report_service_log" model="ir.actions.report">
+        <field name="name">Service Log Report</field>
+        <field name="model">biomedical.service.log</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">biomedical_service.report_service_log</field>
+        <field name="report_file">biomedical_service.report_service_log</field>
+        <field name="binding_model_id" ref="model_biomedical_service_log"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- QWeb Template -->
+    <template id="report_service_log">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="row">
+                            <div class="col-12 text-center mt-4 mb-4">
+                                <h2 style="color: #2D3748; font-weight: bold;">Service Log Record</h2>
+                                <h4 class="text-muted"><span t-field="o.name"/></h4>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4 mb-4">
+                            <div class="col-6" style="font-size: 14px; line-height: 1.6;">
+                                <strong>Customer:</strong> <span t-field="o.sale_order_id.partner_id.name"/><br/>
+                                <strong>Sale Order:</strong> <span t-field="o.sale_order_id.name"/><br/>
+                                <strong>Date of Sale:</strong> <span t-field="o.sale_order_id.date_order" t-options='{"widget": "date"}'/>
+                            </div>
+                            <div class="col-6" style="font-size: 14px; line-height: 1.6;">
+                                <strong>Technician:</strong> <span t-field="o.employee_id.name"/><br/>
+                                <strong>Scheduled Date:</strong> <span t-field="o.scheduled_date"/><br/>
+                                <strong>Completed Date:</strong> <span t-field="o.completed_date"/><br/>
+                                <strong>Status:</strong> <span t-field="o.state"/><br/>
+                                <strong>Interval Hours:</strong> <span t-field="o.interval_hours"/><br/>
+                                <strong>Current Meter Hours:</strong> <span t-field="o.current_used_hours"/>
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4" style="color: #4A5568; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;">Service Line Information</h4>
+                        <table class="table table-bordered table-striped mt-3" style="font-size: 14px;">
+                            <thead style="background-color: #EDF2F7;">
+                                <tr>
+                                    <th>Product / Equipment</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.service_line_ids" t-as="line">
+                                    <tr>
+                                        <td><span t-field="line.product_id.display_name"/></td>
+                                        <td class="text-end"><span t-field="line.qty"/></td>
+                                        <td class="text-end">
+                                            <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": o.sale_order_id.currency_id}'/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="line.price_subtotal" t-options='{"widget": "monetary", "display_currency": o.sale_order_id.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <h4 class="mt-4" style="color: #4A5568; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;">Service Notes</h4>
+                        <div class="border p-3 rounded mt-3" style="min-height: 180px; font-size: 14px; background-color: #F7FAFC; border-color: #E2E8F0 !important;">
+                            <span t-field="o.notes"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

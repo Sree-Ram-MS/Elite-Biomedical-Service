@@ -10,7 +10,7 @@ Provides REST API endpoints for mobile users to:
 3. Fetch and view sale orders.
     """,
     'author': 'Elite Biomedical Services',
-    'depends': ['sale'],
+    'depends': ['sale', 'biomedical_service'],
     'data': [],
     'installable': True,
     'application': False,

@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_biomedical_sale_expense_user,biomedical.sale.expense.user,model_biomedical_sale_expense,base.group_user,1,1,1,1
+access_biomedical_service_config_user,biomedical.service.config.user,model_biomedical_service_config,base.group_user,1,1,1,1
+access_biomedical_service_log_user,biomedical.service.log.user,model_biomedical_service_log,base.group_user,1,1,1,1
+access_generate_service_log_wizard_user,generate.service.log.wizard.user,model_generate_service_log_wizard,base.group_user,1,1,1,1
+access_biomedical_expense_payment_wizard_user,biomedical.expense.payment.wizard.user,model_biomedical_expense_payment_wizard,base.group_user,1,1,1,1
+access_biomedical_service_invoice_wizard_user,biomedical.service.invoice.wizard.user,model_biomedical_service_invoice_wizard,base.group_user,1,1,1,1
+access_biomedical_expense_type_user,biomedical.expense.type.user,model_biomedical_expense_type,base.group_user,1,1,1,1
+access_biomedical_service_log_line_user,biomedical.service.log.line.user,model_biomedical_service_log_line,base.group_user,1,1,1,1

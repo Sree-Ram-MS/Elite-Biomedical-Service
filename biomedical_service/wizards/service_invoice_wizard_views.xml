@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biomedical_service_invoice_wizard_form" model="ir.ui.view">
+        <field name="name">biomedical.service.invoice.wizard.form</field>
+        <field name="model">biomedical.service.invoice.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create Service Invoice">
+                <group>
+                    <field name="service_log_id" readonly="1" options="{'no_open': True}"/>
+                    <field name="service_product_id" options="{'no_create': True, 'no_open': True}"/>
+                    <field name="amount"/>
+                    <field name="invoice_date"/>
+                    <field name="description"/>
+                </group>
+                <footer>
+                    <button string="Create Invoice" name="action_create_invoice" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

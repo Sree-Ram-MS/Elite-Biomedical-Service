@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="expense_type_petrol" model="biomedical.expense.type">
+        <field name="name">Petrol</field>
+        <field name="code">petrol</field>
+    </record>
+    <record id="expense_type_food" model="biomedical.expense.type">
+        <field name="name">Food</field>
+        <field name="code">food</field>
+    </record>
+    <record id="expense_type_accommodation" model="biomedical.expense.type">
+        <field name="name">Accommodation</field>
+        <field name="code">accommodation</field>
+    </record>
+    <record id="expense_type_misc" model="biomedical.expense.type">
+        <field name="name">Miscellaneous</field>
+        <field name="code">misc</field>
+    </record>
+</odoo>

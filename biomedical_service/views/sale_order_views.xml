@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherited Sale Order Form View -->
+    <record id="view_order_form_inherit_biomedical" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.biomedical</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_generate_service_log_wizard" 
+                        string="Generate Service Log" 
+                        type="object" 
+                        class="btn-primary" 
+                        invisible="state not in ('sale', 'done') or service_log_generated"/>
+                <field name="service_log_generated" invisible="1"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_service_logs" type="object" class="oe_stat_button" icon="fa-wrench">
+                    <field name="service_log_count" widget="statinfo" string="Service Logs"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Expenses" name="expenses">
+                    <field name="expense_ids">
+                        <list string="Expenses" editable="bottom">
+                            <field name="expense_date"/>
+                            <field name="expense_type_id"/>
+                            <field name="description"/>
+                            <field name="employee_id"/>
+                            <field name="amount" sum="Total Amount"/>
+                            <field name="currency_id" column_invisible="True"/>
+                            <field name="payment_state" readonly="1"/>
+                            <button name="action_register_payment" string="Register Payment" type="object" icon="fa-money" invisible="payment_state == 'paid'"/>
+                            <button name="action_view_payment" string="View Payment" type="object" icon="fa-eye" invisible="payment_state != 'paid'"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="Service Logs" name="service_logs">
+                    <field name="service_log_ids" readonly="1">
+                        <list string="Service Logs">
+                            <field name="service_name"/>
+                            <field name="scheduled_date"/>
+                            <field name="completed_date"/>
+                            <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'completed'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

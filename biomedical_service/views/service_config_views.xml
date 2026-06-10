@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Product Template Form View Inheritance -->
+    <record id="product_template_only_form_view_inherit_biomedical" model="ir.ui.view">
+        <field name="name">product.template.form.inherit.biomedical</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Service Configurations" name="service_configurations">
+                    <field name="service_config_ids" mode="list">
+                        <list string="Service Configurations" editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="service_name"/>
+                            <field name="interval_days"/>
+                            <field name="interval_hours"/>
+                            <field name="description"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
