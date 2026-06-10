@@ -717,3 +717,207 @@ class BiomedicalApiController(http.Controller):
                 status=500
             )
 
+    @http.route('/api/service_logs', type='http', auth='public', methods=['GET', 'OPTIONS'], csrf=False)
+    @validate_token
+    def api_service_logs(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return request.make_response(
+                '',
+                headers=[
+                    ('Access-Control-Allow-Origin', '*'),
+                    ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+                    ('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie'),
+                ]
+            )
+
+        try:
+            company_ids = tuple(request.env.companies.ids or [request.env.company.id])
+            lang = request.env.lang or 'en_US'
+            cr = request.env.cr
+            company_currency_symbol = request.env.company.currency_id.symbol or ''
+
+            cr.execute("""
+                SELECT 
+                    bsl.id,
+                    bsl.sale_order_id,
+                    so.name as order_name,
+                    bsl.name,
+                    bsl.service_name,
+                    emp.name as employee_name,
+                    bsl.scheduled_date,
+                    bsl.completed_date,
+                    bsl.current_used_hours,
+                    bsl.interval_hours,
+                    bsl.notes,
+                    bsl.state,
+                    bsl.invoice_id,
+                    am.name as invoice_name
+                FROM biomedical_service_log bsl
+                LEFT JOIN sale_order so ON bsl.sale_order_id = so.id
+                LEFT JOIN hr_employee emp ON bsl.employee_id = emp.id
+                LEFT JOIN account_move am ON bsl.invoice_id = am.id
+                WHERE bsl.sale_order_id IN (
+                    SELECT id FROM sale_order WHERE company_id IN %s
+                )
+                ORDER BY bsl.scheduled_date DESC, bsl.id DESC
+            """, (company_ids,))
+            service_logs = cr.dictfetchall()
+            service_log_ids = tuple(log['id'] for log in service_logs)
+
+            lines_by_log = {}
+            if service_log_ids:
+                cr.execute("""
+                    SELECT 
+                        bsll.id,
+                        bsll.service_log_id,
+                        COALESCE(pp.default_code, '') || CASE WHEN COALESCE(pp.default_code,'') != '' THEN ' ' ELSE '' END ||
+                        COALESCE(pt.name->>%s, pt.name->>'en_US', '') as product_name,
+                        bsll.qty,
+                        bsll.price_unit,
+                        bsll.price_subtotal,
+                        STRING_AGG(
+                            COALESCE(pav.name->>%s, pav.name->>'en_US', ''),
+                            ', ' ORDER BY ptav.id
+                        ) FILTER (WHERE pav.id IS NOT NULL) as variant_attributes
+                    FROM biomedical_service_log_line bsll
+                    LEFT JOIN product_product pp ON bsll.product_id = pp.id
+                    LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                    LEFT JOIN product_variant_combination pvc ON pvc.product_product_id = pp.id
+                    LEFT JOIN product_template_attribute_value ptav ON ptav.id = pvc.product_template_attribute_value_id
+                    LEFT JOIN product_attribute_value pav ON pav.id = ptav.product_attribute_value_id
+                    WHERE bsll.service_log_id IN %s
+                    GROUP BY bsll.id, bsll.service_log_id, pp.default_code, pt.name, bsll.qty, bsll.price_unit, bsll.price_subtotal
+                    ORDER BY bsll.id
+                """, (lang, lang, service_log_ids))
+                for line in cr.dictfetchall():
+                    log_id = line['service_log_id']
+                    base_name = line['product_name'].strip()
+                    attrs = line.get('variant_attributes') or ''
+                    full_name = f"{base_name} ({attrs})" if attrs else base_name
+                    lines_by_log.setdefault(log_id, []).append({
+                        'id': line['id'],
+                        'product_name': full_name,
+                        'qty': line['qty'],
+                        'price_unit': line['price_unit'],
+                        'price_subtotal': line['price_subtotal'],
+                    })
+
+            result_logs = []
+            for log in service_logs:
+                result_logs.append({
+                    'id': log['id'],
+                    'sale_order_id': log['sale_order_id'],
+                    'order_name': log['order_name'] or '',
+                    'name': log['name'] or '',
+                    'service_name': log['service_name'] or '',
+                    'employee_name': log['employee_name'] or '',
+                    'scheduled_date': log['scheduled_date'].isoformat() if log['scheduled_date'] else None,
+                    'completed_date': log['completed_date'].isoformat() if log['completed_date'] else None,
+                    'current_used_hours': log['current_used_hours'] or 0.0,
+                    'interval_hours': log['interval_hours'] or 0.0,
+                    'notes': log['notes'] or '',
+                    'state': log['state'],
+                    'invoice_id': log['invoice_id'],
+                    'invoice_name': log['invoice_name'] or '',
+                    'currency_symbol': company_currency_symbol,
+                    'service_lines': lines_by_log.get(log['id'], []),
+                })
+
+            return request.make_response(
+                json.dumps({'service_logs': result_logs}),
+                headers=[
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', '*'),
+                ]
+            )
+        except Exception as e:
+            _logger.exception("Failed to retrieve service logs")
+            return request.make_response(
+                json.dumps({'error': str(e)}),
+                headers=[
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', '*'),
+                ],
+                status=500
+            )
+
+    @http.route('/api/expenses', type='http', auth='public', methods=['GET', 'OPTIONS'], csrf=False)
+    @validate_token
+    def api_expenses(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return request.make_response(
+                '',
+                headers=[
+                    ('Access-Control-Allow-Origin', '*'),
+                    ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+                    ('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie'),
+                ]
+            )
+
+        try:
+            company_ids = tuple(request.env.companies.ids or [request.env.company.id])
+            cr = request.env.cr
+            company_currency_symbol = request.env.company.currency_id.symbol or ''
+
+            cr.execute("""
+                SELECT 
+                    e.id, 
+                    e.sale_order_id,
+                    so.name as order_name,
+                    e.expense_date, 
+                    et.name as expense_type_name, 
+                    e.description, 
+                    e.amount, 
+                    COALESCE(curr.symbol, comp_curr.symbol, '') as currency_symbol, 
+                    e.payment_state, 
+                    emp.name as employee_name, 
+                    e.notes
+                FROM biomedical_sale_expense e
+                LEFT JOIN sale_order so ON e.sale_order_id = so.id
+                LEFT JOIN biomedical_expense_type et ON e.expense_type_id = et.id
+                LEFT JOIN res_currency curr ON e.currency_id = curr.id
+                LEFT JOIN res_company rc ON so.company_id = rc.id
+                LEFT JOIN res_currency comp_curr ON rc.currency_id = comp_curr.id
+                LEFT JOIN hr_employee emp ON e.employee_id = emp.id
+                WHERE e.sale_order_id IN (
+                    SELECT id FROM sale_order WHERE company_id IN %s
+                )
+                ORDER BY e.expense_date DESC, e.id DESC
+            """, (company_ids,))
+            
+            expenses = cr.dictfetchall()
+            result_expenses = []
+            for exp in expenses:
+                result_expenses.append({
+                    'id': exp['id'],
+                    'sale_order_id': exp['sale_order_id'],
+                    'order_name': exp['order_name'] or '',
+                    'expense_date': exp['expense_date'].isoformat() if exp['expense_date'] else None,
+                    'expense_type_name': exp['expense_type_name'] or '',
+                    'description': exp['description'] or '',
+                    'amount': exp['amount'],
+                    'currency_symbol': exp['currency_symbol'] or company_currency_symbol,
+                    'payment_state': exp['payment_state'],
+                    'employee_name': exp['employee_name'] or '',
+                    'notes': exp['notes'] or '',
+                })
+
+            return request.make_response(
+                json.dumps({'expenses': result_expenses}),
+                headers=[
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', '*'),
+                ]
+            )
+        except Exception as e:
+            _logger.exception("Failed to retrieve expenses")
+            return request.make_response(
+                json.dumps({'error': str(e)}),
+                headers=[
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', '*'),
+                ],
+                status=500
+            )
+
+
