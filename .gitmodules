@@ -1,0 +1,3 @@
+[submodule "biomedical_mobile"]
+	path = biomedical_mobile
+	url = git@github.com:Sree-Ram-MS/Elite-Biomedical-Service-App.git
