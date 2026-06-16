@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_openwa_session,access_openwa_session,model_openwa_session,base.group_user,1,1,1,1
+access_openwa_chat,access_openwa_chat,model_openwa_chat,base.group_user,1,1,1,1
+access_openwa_message,access_openwa_message,model_openwa_message,base.group_user,1,1,1,1
+access_openwa_connection_wizard,access_openwa_connection_wizard,model_openwa_connection_wizard,base.group_user,1,1,1,1

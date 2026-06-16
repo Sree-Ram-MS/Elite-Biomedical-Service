@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ════════════════════════════════════════
+         MY SESSION — OWL Client Action
+    ════════════════════════════════════════ -->
+    <record id="action_openwa_my_session" model="ir.actions.client">
+        <field name="name">My WhatsApp Session</field>
+        <field name="tag">openwa_whatsapp_session_dashboard</field>
+    </record>
+
+    <!-- ════════════════════════════════════════
+         SESSIONS LIST — Admin only
+    ════════════════════════════════════════ -->
+    <record id="view_openwa_session_list" model="ir.ui.view">
+        <field name="name">openwa.session.list</field>
+        <field name="model">openwa.session</field>
+        <field name="arch" type="xml">
+            <list string="WhatsApp Sessions">
+                <field name="user_id"/>
+                <field name="session_name"/>
+                <field name="status"/>
+                <field name="phone"/>
+                <field name="push_name"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_openwa_all_sessions" model="ir.actions.act_window">
+        <field name="name">All Sessions</field>
+        <field name="res_model">openwa.session</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="openwa_whatsapp.ChatApp">
+        <div class="openwa-whatsapp-web d-flex flex-row w-100 h-100 position-relative">
+
+            <!-- LEFT PANEL: CHAT LIST -->
+            <div class="openwa-sidebar d-flex flex-column h-100 border-end">
+
+                <!-- Header: Session info & Actions -->
+                <div class="openwa-sidebar-header d-flex align-items-center justify-content-between p-3 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="openwa-avatar-container position-relative">
+                            <div class="openwa-default-avatar d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle">
+                                <i class="fa fa-whatsapp fs-4"></i>
+                            </div>
+                            <span t-attf-class="openwa-status-dot position-absolute bottom-0 end-0 rounded-circle border border-white #{state.sessionStatus === 'ready' ? 'bg-success' : (state.sessionStatus === 'qr_ready' || state.sessionStatus === 'initializing' ? 'bg-warning' : 'bg-danger')}"
+                                  t-att-title="state.sessionStatus"></span>
+                        </div>
+                        <div class="openwa-session-details d-flex flex-column">
+                            <span class="fw-bold text-dark text-truncate" style="max-width: 140px;" t-esc="state.sessionPushName or state.sessionName or 'Not Connected'"></span>
+                            <span class="text-muted small" style="font-size: 11px;" t-esc="state.sessionPhone or state.sessionStatus or 'Offline'"></span>
+                        </div>
+                    </div>
+
+                    <div class="openwa-sidebar-actions d-flex gap-2">
+                        <button class="btn btn-light rounded-circle p-2 shadow-sm d-flex align-items-center justify-content-center"
+                                t-on-click="openNewChatModal"
+                                title="New Chat"
+                                t-att-disabled="state.sessionStatus !== 'ready'">
+                            <i class="fa fa-plus text-primary fs-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="openwa-search-container p-2 border-bottom">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fa fa-search text-muted"></i>
+                        </span>
+                        <input type="text"
+                               class="form-control border-start-0 ps-0"
+                               placeholder="Search or start new chat"
+                               t-model="state.searchTerm"/>
+                    </div>
+                </div>
+
+                <!-- Scrollable Chats List -->
+                <div class="openwa-chats-list flex-grow-1 overflow-auto">
+                    <t t-if="state.loadingChats">
+                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                            <div class="spinner-border text-primary mb-2" role="status"></div>
+                            <span>Loading chats...</span>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <t t-if="filteredChats.length === 0">
+                            <div class="d-flex align-items-center justify-content-center h-100 text-muted p-3 text-center">
+                                <div>
+                                    <i class="fa fa-comments-o fs-1 mb-2 text-black-50"></i>
+                                    <p>No active chats found.</p>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <t t-foreach="filteredChats" t-as="chat" t-key="chat.id">
+                                <div t-attf-class="openwa-chat-item d-flex align-items-center p-3 border-bottom cursor-pointer transition #{state.selectedChatId === chat.id ? 'active' : ''}"
+                                     t-on-click="() => this.selectChat(chat.id)">
+
+                                    <!-- Contact Avatar -->
+                                    <div class="openwa-contact-avatar me-3 position-relative">
+                                        <t t-if="chat.profile_pic_url">
+                                            <img t-att-src="chat.profile_pic_url" class="rounded-circle w-100 h-100" style="object-fit: cover;"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="openwa-default-avatar-contact d-flex align-items-center justify-content-center rounded-circle bg-light text-secondary">
+                                                <i class="fa fa-user fs-4"></i>
+                                            </div>
+                                        </t>
+                                    </div>
+
+                                    <!-- Chat Meta/Preview -->
+                                    <div class="openwa-chat-info flex-grow-1 min-w-0">
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <h6 class="mb-0 text-truncate text-dark font-weight-bold" t-esc="chat.name"></h6>
+                                            <span class="openwa-chat-time text-muted small" t-esc="formatTime(chat.last_message_date)"></span>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="openwa-chat-preview text-muted text-truncate" t-esc="chat.last_message_body"></span>
+                                            <t t-if="chat.unread_count > 0">
+                                                <span class="badge rounded-pill bg-success text-white ms-2" t-esc="chat.unread_count"></span>
+                                            </t>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </t>
+                        </t>
+                    </t>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: MESSAGE CONTENT AREA -->
+            <div class="openwa-main-panel d-flex flex-column h-100 flex-grow-1 bg-light">
+
+                <!-- Unselected State: Welcome / No Chat Selected -->
+                <t t-if="!state.selectedChatId">
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-5">
+
+                        <t t-if="state.sessionStatus === 'ready'">
+                            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mb-4" style="width:88px;height:88px;">
+                                <i class="fa fa-whatsapp text-success" style="font-size:52px;"></i>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-2">WhatsApp Connected</h4>
+                            <p class="text-muted mb-4" style="max-width:380px;">
+                                Select a conversation from the left, or click <strong>+</strong> to start a new chat.
+                            </p>
+                            <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm small text-muted">
+                                <span class="rounded-circle bg-success d-inline-block" style="width:8px;height:8px;"></span>
+                                <span t-esc="state.sessionPushName or state.sessionName"></span>
+                                <t t-if="state.sessionPhone">
+                                    <span class="mx-1">·</span>
+                                    <span t-esc="state.sessionPhone"></span>
+                                </t>
+                            </div>
+                        </t>
+
+                        <t t-else="">
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center mb-4" style="width:88px;height:88px;">
+                                <i class="fa fa-exclamation-triangle text-warning" style="font-size:48px;"></i>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-2">WhatsApp Not Connected</h4>
+                            <p class="text-muted mb-4" style="max-width:400px;">
+                                Your session is <strong t-esc="state.sessionStatus"></strong>.<br/>
+                                Go to <strong>WhatsApp → My Session</strong> to start and scan your QR code.
+                            </p>
+                            <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm small text-muted">
+                                <span class="rounded-circle bg-danger d-inline-block" style="width:8px;height:8px;"></span>
+                                <span>Session offline — visit <em>My Session</em> to connect</span>
+                            </div>
+                        </t>
+
+                    </div>
+                </t>
+
+                <!-- Selected Chat Messaging Panel -->
+                <t t-else="">
+
+                    <!-- Selected Chat Header -->
+                    <div class="openwa-chat-header d-flex align-items-center justify-content-between p-3 border-bottom bg-white shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <div class="openwa-contact-avatar-header me-3">
+                                <t t-if="selectedChat.profile_pic_url">
+                                    <img t-att-src="selectedChat.profile_pic_url" class="rounded-circle w-100 h-100" style="object-fit: cover;"/>
+                                </t>
+                                <t t-else="">
+                                    <div class="openwa-default-avatar-contact-header d-flex align-items-center justify-content-center rounded-circle bg-light text-secondary">
+                                        <i class="fa fa-user fs-5"></i>
+                                    </div>
+                                </t>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 text-dark font-weight-bold" t-esc="selectedChat.name"></h6>
+                                <span class="text-muted small" t-esc="selectedChat.jid"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages List Pane -->
+                    <div class="openwa-messages-container flex-grow-1 overflow-auto p-4" t-ref="messageContainer">
+                        <t t-if="state.loadingMessages">
+                            <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                                <div class="spinner-border text-success" role="status"></div>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <t t-if="state.messages.length === 0">
+                                <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                                    <span>Send a message to start the conversation.</span>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <t t-foreach="state.messages" t-as="msg" t-key="msg.id">
+                                    <div t-attf-class="openwa-msg-wrapper d-flex mb-3 #{msg.direction === 'outbound' ? 'justify-content-end' : 'justify-content-start'}">
+
+                                        <!-- Message Bubble -->
+                                        <div t-attf-class="openwa-msg-bubble px-3 py-2 rounded shadow-sm max-w-lg #{msg.direction === 'outbound' ? 'outbound bg-success-light text-dark' : 'inbound bg-white text-dark'}">
+
+                                            <!-- Image message -->
+                                            <t t-if="msg.type === 'image'">
+                                                <div class="openwa-msg-image-container position-relative mb-1 cursor-pointer overflow-hidden rounded border"
+                                                     t-on-click="() => this.openLightbox(msg.attachment_url)">
+                                                    <img t-att-src="msg.attachment_url" class="w-100 h-auto" style="max-height: 240px; object-fit: contain;"/>
+                                                    <div class="openwa-msg-image-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0 transition">
+                                                        <i class="fa fa-search-plus text-white fs-3"></i>
+                                                    </div>
+                                                </div>
+                                            </t>
+
+                                            <!-- Document/PDF message -->
+                                            <t t-if="msg.type === 'document'">
+                                                <div class="openwa-msg-document-container d-flex align-items-center gap-2 p-2 rounded border bg-light mb-1" style="max-width: 320px;">
+                                                    <div class="openwa-msg-document-icon d-flex align-items-center justify-content-center bg-danger text-white rounded-circle flex-shrink-0" style="width: 36px; height: 36px;">
+                                                        <i class="fa fa-file-pdf-o fs-5" t-if="msg.body &amp;&amp; msg.body.toLowerCase().endsWith('.pdf')"></i>
+                                                        <i class="fa fa-file-text-o fs-5" t-else=""></i>
+                                                    </div>
+                                                    <div class="openwa-msg-document-info d-flex flex-column min-w-0 flex-grow-1">
+                                                        <span class="fw-bold text-dark text-truncate" style="font-size: 13px;" t-esc="msg.body or 'Document.pdf'"></span>
+                                                        <span class="text-muted" style="font-size: 11px;">Document</span>
+                                                    </div>
+                                                    <a t-att-href="msg.attachment_url" target="_blank" download="true" class="btn btn-sm btn-link text-primary p-0 ms-2 flex-shrink-0">
+                                                        <i class="fa fa-download fs-5"></i>
+                                                    </a>
+                                                </div>
+                                            </t>
+
+                                            <!-- Text Body -->
+                                            <t t-if="msg.type === 'text' || (msg.type !== 'text' &amp;&amp; msg.body &amp;&amp; msg.body !== '[Image]' &amp;&amp; msg.body !== '[Document]' &amp;&amp; !msg.body.endsWith('.pdf'))">
+                                                <p class="mb-1 text-break" style="font-size: 14.5px; white-space: pre-wrap;" t-esc="msg.body"></p>
+                                            </t>
+
+                                            <!-- Timestamp -->
+                                            <div class="text-end text-muted" style="font-size: 10px; margin-top: 2px;">
+                                                <span t-esc="formatTime(msg.timestamp)"></span>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </t>
+                            </t>
+                        </t>
+                    </div>
+
+                    <!-- Footer: Chat Input box -->
+                    <div class="openwa-chat-footer p-3 bg-white border-top shadow-sm d-flex align-items-center gap-3">
+
+                        <!-- Attach File Button -->
+                        <button class="btn btn-light rounded-circle p-2 shadow-sm d-flex align-items-center justify-content-center"
+                                t-on-click="triggerFileUpload"
+                                title="Attach File"
+                                t-att-disabled="state.isSending">
+                            <i class="fa fa-paperclip text-muted fs-5"></i>
+                        </button>
+
+                        <!-- Hidden File input -->
+                        <input type="file"
+                               id="openwa_chat_file_input"
+                               style="display: none;"
+                               accept="*/*"
+                               t-on-change="onFileSelected"/>
+
+                        <!-- Text input box -->
+                        <input type="text"
+                               class="form-control rounded-pill px-4 border shadow-sm py-2"
+                               placeholder="Type a message"
+                               t-model="state.newMessageText"
+                               t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.sendMessage()"
+                               t-att-disabled="state.isSending"/>
+
+                        <!-- Send Button -->
+                        <button class="btn rounded-circle text-white d-flex align-items-center justify-content-center shadow"
+                                style="background-color: #00a884; width: 42px; height: 42px; padding: 0;"
+                                t-on-click="sendMessage"
+                                t-att-disabled="state.isSending || !state.newMessageText.trim()">
+                            <t t-if="state.isSending">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </t>
+                            <t t-else="">
+                                <i class="fa fa-send fs-6 ms-1"></i>
+                            </t>
+                        </button>
+
+                    </div>
+
+                </t>
+            </div>
+
+            <!-- LIGHTBOX MODAL -->
+            <t t-if="state.lightboxImage">
+                <div class="openwa-lightbox position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-black bg-opacity-75 z-index-modal"
+                     t-on-click="closeLightbox">
+                    <button class="btn btn-link text-white position-absolute top-0 end-0 m-4 p-2" t-on-click="closeLightbox">
+                        <i class="fa fa-times fs-2"></i>
+                    </button>
+                    <div class="openwa-lightbox-content position-relative p-3" t-on-click="(ev) => ev.stopPropagation()">
+                        <img t-att-src="state.lightboxImage" class="img-fluid rounded shadow-lg" style="max-height: 85vh; max-width: 90vw; object-fit: contain;"/>
+                    </div>
+                </div>
+            </t>
+
+            <!-- NEW CHAT MODAL -->
+            <t t-if="state.showNewChatModal">
+                <div class="modal d-block show bg-black bg-opacity-50" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content shadow-lg border-0">
+                            <div class="modal-header border-0 pb-0 justify-content-between">
+                                <h5 class="modal-title font-weight-bold text-dark">Add New Conversation</h5>
+                                <button type="button" class="btn-close" t-on-click="closeNewChatModal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body py-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label fw-bold text-muted mb-2">WhatsApp Number</label>
+                                    <input type="text"
+                                           class="form-control form-control-lg"
+                                           placeholder="e.g. +919876543210 or 62812345678"
+                                           t-model="state.newChatNumber"
+                                           t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.createNewChat()"
+                                           t-att-disabled="state.isVerifyingNumber"/>
+                                    <div class="form-text text-muted mt-2">
+                                        Enter the full country code followed by the phone number, without spaces or symbols.
+                                    </div>
+                                </div>
+                                <t t-if="state.newChatError">
+                                    <div class="alert alert-danger py-2 px-3 text-center mb-0" role="alert">
+                                        <i class="fa fa-exclamation-triangle me-2"></i>
+                                        <span t-esc="state.newChatError"></span>
+                                    </div>
+                                </t>
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-secondary px-4" t-on-click="closeNewChatModal" t-att-disabled="state.isVerifyingNumber">Cancel</button>
+                                <button type="button" class="btn btn-primary px-4" style="background-color: #00a884; border-color: #00a884;" t-on-click="createNewChat" t-att-disabled="state.isVerifyingNumber || !state.newChatNumber">
+                                    <t t-if="state.isVerifyingNumber">
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>Verifying...
+                                    </t>
+                                    <t t-else="">
+                                        Create Chat
+                                    </t>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+        </div>
+    </t>
+</templates>

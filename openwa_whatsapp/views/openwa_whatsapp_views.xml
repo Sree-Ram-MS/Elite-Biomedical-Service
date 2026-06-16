@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ════════════════════════════════════════
+         WHATSAPP WEB — Chat Client Action
+    ════════════════════════════════════════ -->
+    <record id="action_openwa_whatsapp_chat" model="ir.actions.client">
+        <field name="name">WhatsApp Web</field>
+        <field name="tag">openwa_whatsapp_chat_client_action</field>
+    </record>
+
+    <!-- ════════════════════════════════════════
+         CHATS HISTORY VIEWS
+    ════════════════════════════════════════ -->
+    <record id="view_openwa_chat_list" model="ir.ui.view">
+        <field name="name">openwa.chat.list</field>
+        <field name="model">openwa.chat</field>
+        <field name="arch" type="xml">
+            <list string="WhatsApp Chats">
+                <field name="name"/>
+                <field name="jid"/>
+                <field name="session_id"/>
+                <field name="unread_count"/>
+                <field name="last_message_body"/>
+                <field name="last_message_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_openwa_chat_form" model="ir.ui.view">
+        <field name="name">openwa.chat.form</field>
+        <field name="model">openwa.chat</field>
+        <field name="arch" type="xml">
+            <form string="WhatsApp Chat">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="jid" readonly="1"/>
+                            <field name="session_id" readonly="1"/>
+                            <field name="unread_count" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="last_message_date" readonly="1"/>
+                            <field name="profile_pic_url" readonly="1" widget="url"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Messages" name="messages">
+                            <field name="message_ids" readonly="1">
+                                <list>
+                                    <field name="timestamp"/>
+                                    <field name="direction"/>
+                                    <field name="type"/>
+                                    <field name="body"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_openwa_chat_list" model="ir.actions.act_window">
+        <field name="name">Chats History</field>
+        <field name="res_model">openwa.chat</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ════════════════════════════════════════
+         MESSAGES HISTORY VIEWS
+    ════════════════════════════════════════ -->
+    <record id="view_openwa_message_list" model="ir.ui.view">
+        <field name="name">openwa.message.list</field>
+        <field name="model">openwa.message</field>
+        <field name="arch" type="xml">
+            <list string="WhatsApp Messages">
+                <field name="timestamp"/>
+                <field name="chat_id"/>
+                <field name="direction"/>
+                <field name="type"/>
+                <field name="body"/>
+                <field name="wa_message_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_openwa_message_list" model="ir.actions.act_window">
+        <field name="name">Messages History</field>
+        <field name="res_model">openwa.message</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- ════════════════════════════════════════
+         MENU STRUCTURE
+    ════════════════════════════════════════ -->
+    <!-- Root Menu -->
+    <menuitem id="menu_openwa_whatsapp_root"
+              name="WhatsApp"
+              web_icon="openwa_whatsapp,static/description/icon.png"
+              sequence="15"/>
+
+    <!-- WhatsApp Web (Chat) -->
+    <menuitem id="menu_openwa_whatsapp_chat"
+              name="WhatsApp Web"
+              parent="menu_openwa_whatsapp_root"
+              action="action_openwa_whatsapp_chat"
+              sequence="10"/>
+
+    <!-- My Session Dashboard -->
+    <menuitem id="menu_openwa_my_session"
+              name="My Session"
+              parent="menu_openwa_whatsapp_root"
+              action="action_openwa_my_session"
+              sequence="20"/>
+
+    <!-- History Sub-menu -->
+    <menuitem id="menu_openwa_whatsapp_history"
+              name="History"
+              parent="menu_openwa_whatsapp_root"
+              sequence="30"/>
+
+    <menuitem id="menu_openwa_chat_history"
+              name="Chats"
+              parent="menu_openwa_whatsapp_history"
+              action="action_openwa_chat_list"
+              sequence="10"/>
+
+    <menuitem id="menu_openwa_message_history"
+              name="Messages"
+              parent="menu_openwa_whatsapp_history"
+              action="action_openwa_message_list"
+              sequence="20"/>
+
+    <!-- Configuration Menu (Admin only) -->
+    <menuitem id="menu_openwa_whatsapp_config"
+              name="Configuration"
+              parent="menu_openwa_whatsapp_root"
+              sequence="40"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_openwa_settings"
+              name="Settings"
+              parent="menu_openwa_whatsapp_config"
+              action="openwa_whatsapp_config_settings_action"
+              sequence="10"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_openwa_all_sessions"
+              name="All Sessions"
+              parent="menu_openwa_whatsapp_config"
+              action="action_openwa_all_sessions"
+              sequence="20"
+              groups="base.group_system"/>
+
+    <!-- Go to OpenWA Dashboard (opens in new tab) -->
+    <menuitem id="menu_openwa_dashboard_link"
+              name="Go to OpenWA Dashboard"
+              parent="menu_openwa_whatsapp_config"
+              action="openwa_whatsapp.action_openwa_open_dashboard"
+              sequence="30"
+              groups="base.group_system"/>
+</odoo>

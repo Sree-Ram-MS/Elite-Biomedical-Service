@@ -1,0 +1,241 @@
+/* openwa_chat.css - Premium WhatsApp Web Interface */
+
+.openwa-whatsapp-web {
+    background-color: #f0f2f5;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* LEFT PANEL - SIDEBAR */
+.openwa-sidebar {
+    width: 380px;
+    min-width: 340px;
+    max-width: 420px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+.openwa-sidebar-header {
+    background-color: #f0f2f5;
+    height: 60px;
+}
+
+.openwa-default-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: #ffffff !important;
+}
+
+.openwa-status-dot {
+    width: 12px;
+    height: 12px;
+    border-width: 2px !important;
+}
+
+.openwa-search-container {
+    background-color: #ffffff;
+    padding: 8px 12px !important;
+}
+
+.openwa-search-container input {
+    background-color: #f0f2f5;
+    border-radius: 8px !important;
+    font-size: 14px;
+}
+
+.openwa-search-container .input-group-text {
+    background-color: #f0f2f5;
+    border-radius: 8px 0 0 8px !important;
+}
+
+.openwa-chats-list {
+    background-color: #ffffff;
+}
+
+/* Chat List Items */
+.openwa-chat-item {
+    height: 72px;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f2f5 !important;
+}
+
+.openwa-chat-item:hover {
+    background-color: #f5f6f6;
+}
+
+.openwa-chat-item.active {
+    background-color: #eaebeb;
+}
+
+.openwa-contact-avatar {
+    width: 49px;
+    height: 49px;
+    min-width: 49px;
+}
+
+.openwa-default-avatar-contact {
+    width: 49px;
+    height: 49px;
+    background-color: #dfe5e7;
+    color: #54656f !important;
+}
+
+.openwa-chat-preview {
+    font-size: 13.5px;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.openwa-chat-time {
+    font-size: 12px;
+}
+
+/* RIGHT PANEL - MESSAGING SECTION */
+.openwa-main-panel {
+    background-color: #efeae2;
+    position: relative;
+}
+
+/* Welcome Screen */
+.openwa-welcome {
+    background-color: #f8f9fa;
+    border-left: 1px solid #e9edef;
+}
+
+.openwa-welcome-circle {
+    width: 160px;
+    height: 160px;
+    background: #ffffff;
+    transition: transform 0.3s ease;
+}
+
+.openwa-welcome-circle:hover {
+    transform: scale(1.05);
+}
+
+/* Selected Chat Header */
+.openwa-chat-header {
+    background-color: #f0f2f5 !important;
+    height: 60px;
+    z-index: 10;
+}
+
+.openwa-contact-avatar-header {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+}
+
+.openwa-default-avatar-contact-header {
+    width: 40px;
+    height: 40px;
+    background-color: #dfe5e7;
+    color: #54656f !important;
+}
+
+/* Messages List Panel */
+.openwa-messages-container {
+    background-color: #efeae2;
+    background-image: radial-gradient(rgba(0, 168, 132, 0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+    overflow-y: auto;
+}
+
+/* Message Bubble */
+.openwa-msg-bubble {
+    position: relative;
+    max-width: 65%;
+    font-size: 14.5px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    border-radius: 7.5px !important;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13) !important;
+}
+
+.openwa-msg-bubble.outbound {
+    background-color: #d9fdd3 !important;
+    border-top-right-radius: 0 !important;
+}
+
+.openwa-msg-bubble.inbound {
+    background-color: #ffffff !important;
+    border-top-left-radius: 0 !important;
+}
+
+/* Inline Image Attachment */
+.openwa-msg-image-container {
+    margin: -4px -8px 4px -8px;
+    max-width: 280px;
+}
+
+.openwa-msg-image-container img {
+    display: block;
+    transition: filter 0.3s ease;
+}
+
+.openwa-msg-image-container:hover img {
+    filter: brightness(0.9);
+}
+
+.openwa-msg-image-container:hover .openwa-msg-image-overlay {
+    opacity: 1 !important;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Chat Input Footer */
+.openwa-chat-footer {
+    background-color: #f0f2f5 !important;
+    height: 62px;
+}
+
+.openwa-chat-footer input {
+    border: none !important;
+    background-color: #ffffff;
+    font-size: 15px;
+}
+
+.openwa-chat-footer input:focus {
+    box-shadow: none !important;
+}
+
+/* LIGHTBOX MODAL */
+.openwa-lightbox {
+    z-index: 1050;
+    transition: background-color 0.3s ease;
+}
+
+.openwa-lightbox-content {
+    animation: zoomIn 0.2s ease-out;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* CUSTOM SCROLLBARS */
+.openwa-chats-list::-webkit-scrollbar,
+.openwa-messages-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.openwa-chats-list::-webkit-scrollbar-thumb,
+.openwa-messages-container::-webkit-scrollbar-thumb {
+    background-color: rgba(11, 20, 26, 0.2);
+    border-radius: 3px;
+}
+
+.openwa-chats-list::-webkit-scrollbar-track,
+.openwa-messages-container::-webkit-scrollbar-track {
+    background-color: transparent;
+}

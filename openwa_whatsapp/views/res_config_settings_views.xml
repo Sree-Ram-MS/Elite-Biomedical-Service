@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.openwa.whatsapp</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="95"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="WhatsApp Gateway" string="WhatsApp Gateway" name="openwa_whatsapp" groups="base.group_system">
+                    <block title="Gateway Connection (Global)" name="openwa_gateway_connection_container">
+
+                        <div style="grid-column: span 2;" class="mb-4">
+                            <div class="alert alert-info py-3 px-4 mb-0" role="alert"
+                                 style="border-left: 4px solid #00a884; background: #e8f7f5; font-size: 13px; border-radius: 6px; color: #004d40;">
+                                <strong>💡 Global Settings:</strong><br/>
+                                These settings apply to <strong>all users</strong>. Each user manages their own WhatsApp session independently via <em>WhatsApp → My Session</em>.
+                            </div>
+                        </div>
+
+                        <!-- API URL -->
+                        <div style="grid-column: span 2;" class="mb-3">
+                            <div class="row align-items-center">
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">OpenWA Gateway API URL</div>
+                                    <div class="text-muted" style="font-size: 12px;">Base URL of the self-hosted NestJS server.</div>
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <field name="openwa_api_url" placeholder="e.g. http://localhost:2785" class="w-100"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="grid-column: span 2;" class="my-2"/>
+
+                        <!-- API Key -->
+                        <div style="grid-column: span 2;" class="mb-3">
+                            <div class="row align-items-center">
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">API Key (X-API-Key)</div>
+                                    <div class="text-muted" style="font-size: 12px;">Security key for the NestJS gateway.</div>
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <field name="openwa_api_key" password="True" placeholder="Enter API key" class="w-100"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="grid-column: span 2;" class="my-2"/>
+
+                        <!-- Odoo Base URL -->
+                        <div style="grid-column: span 2;" class="mb-3">
+                            <div class="row align-items-center">
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">Odoo Base URL</div>
+                                    <div class="text-muted" style="font-size: 12px;">Public URL of this Odoo server. OpenWA will POST webhooks to <code>&lt;base_url&gt;/openwa/webhook</code>.</div>
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <field name="openwa_webhook_base_url" placeholder="e.g. http://yourdomain.com" class="w-100"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="grid-column: span 2;" class="my-2"/>
+
+                        <!-- Dashboard URL -->
+                        <div style="grid-column: span 2;" class="mb-3">
+                            <div class="row align-items-center">
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">OpenWA Dashboard URL</div>
+                                    <div class="text-muted" style="font-size: 12px;">URL of the OpenWA web dashboard UI (e.g. http://localhost:2886).</div>
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <field name="openwa_dashboard_url" placeholder="e.g. http://localhost:2886" class="w-100"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Open Dashboard Button -->
+                        <div style="grid-column: span 2;" class="mb-3">
+                            <div class="row align-items-center">
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">OpenWA Dashboard</div>
+                                    <div class="text-muted" style="font-size: 12px;">Open the OpenWA dashboard in a new tab using the URL configured above.</div>
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <button name="action_open_openwa_dashboard"
+                                            string="🚀 Go to OpenWA Dashboard"
+                                            type="object"
+                                            class="btn btn-outline-primary fw-bold px-4"
+                                            icon="fa-external-link"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="grid-column: span 2;" class="my-2"/>
+
+                        <!-- Test Connection Button -->
+                        <div style="grid-column: span 2;" class="mt-2">
+                            <div class="row align-items-center">
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">Test Connection</div>
+                                    <div class="text-muted" style="font-size: 12px;">Verify that Odoo can reach the OpenWA NestJS server using the URL and API key above.</div>
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <button name="action_test_openwa_connection"
+                                            string="🔌 Test Connection"
+                                            type="object"
+                                            class="btn btn-outline-success fw-bold px-4"
+                                            icon="fa-plug"/>
+                                </div>
+                            </div>
+                        </div>
+
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="openwa_whatsapp_config_settings_action" model="ir.actions.act_window">
+        <field name="name">WhatsApp Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_id" ref="res_config_settings_view_form"/>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'openwa_whatsapp', 'bin_size': False}</field>
+    </record>
+
+    <!-- Server action: open OpenWA Dashboard in new tab -->
+    <record id="action_openwa_open_dashboard" model="ir.actions.server">
+        <field name="name">Go to OpenWA Dashboard</field>
+        <field name="model_id" ref="base.model_res_config_settings"/>
+        <field name="state">code</field>
+        <field name="code">
+ICP = env['ir.config_parameter'].sudo()
+dashboard_url = ICP.get_param('openwa.dashboard_url', 'http://localhost:2886').rstrip('/')
+action = {
+    'type': 'ir.actions.act_url',
+    'url': dashboard_url,
+    'target': 'new',
+}
+        </field>
+    </record>
+
+</odoo>

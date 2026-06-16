@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="openwa_whatsapp.SessionDashboard">
+        <div class="o_action openwa-session-page d-flex flex-column h-100 bg-light overflow-auto">
+
+            <!-- Page Header -->
+            <div class="openwa-session-header bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+                        <i class="fa fa-whatsapp text-success fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-dark">My WhatsApp Session</h5>
+                        <span class="text-muted small">Manage your personal WhatsApp connection</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 shadow-sm"
+                        t-on-click="() => this.refresh()"
+                        t-att-disabled="state.loading or state.actionLoading">
+                    <i t-attf-class="fa fa-refresh #{state.loading ? 'fa-spin' : ''}"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <t t-if="state.loading">
+                <div class="d-flex align-items-center justify-content-center flex-grow-1">
+                    <div class="text-center text-muted">
+                        <div class="spinner-border text-success mb-3" style="width:3rem;height:3rem;" role="status"></div>
+                        <p class="fw-semibold">Loading session info…</p>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Main Content -->
+            <t t-else="">
+                <div class="container-fluid py-4 px-4 flex-grow-1">
+                    <div class="row g-4 justify-content-center">
+
+                        <!-- ═══ NO SESSION YET ═══ -->
+                        <t t-if="!state.has_session">
+                            <div class="col-12 col-md-8 col-lg-6">
+                                <div class="card border-0 shadow rounded-4 text-center p-5">
+                                    <div class="mb-4">
+                                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width:88px;height:88px;">
+                                            <i class="fa fa-whatsapp text-success" style="font-size:52px;"></i>
+                                        </div>
+                                        <h4 class="fw-bold text-dark mb-2">Set Up Your WhatsApp</h4>
+                                        <p class="text-muted" style="max-width:380px;margin:0 auto;">
+                                            Create a personal WhatsApp session to send and receive messages directly inside Odoo. Your session is private and only visible to you.
+                                        </p>
+                                    </div>
+                                    <div class="d-flex flex-column gap-3 align-items-center">
+                                        <div class="text-start bg-light rounded-3 p-3 w-100" style="max-width:400px;">
+                                            <div class="d-flex align-items-start gap-2 mb-2">
+                                                <span class="badge bg-success rounded-circle" style="width:22px;height:22px;min-width:22px;font-size:11px;line-height:22px;">1</span>
+                                                <span class="small text-dark">Click <strong>Create My Session</strong> below</span>
+                                            </div>
+                                            <div class="d-flex align-items-start gap-2 mb-2">
+                                                <span class="badge bg-success rounded-circle" style="width:22px;height:22px;min-width:22px;font-size:11px;line-height:22px;">2</span>
+                                                <span class="small text-dark">Click <strong>Start Engine</strong> to launch the browser</span>
+                                            </div>
+                                            <div class="d-flex align-items-start gap-2">
+                                                <span class="badge bg-success rounded-circle" style="width:22px;height:22px;min-width:22px;font-size:11px;line-height:22px;">3</span>
+                                                <span class="small text-dark">Scan the <strong>QR code</strong> with WhatsApp on your phone</span>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-success px-5 py-2 fw-bold rounded-3 shadow"
+                                                style="background:#00a884;border-color:#00a884;"
+                                                t-on-click="createSession"
+                                                t-att-disabled="state.actionLoading">
+                                            <t t-if="state.actionLoading">
+                                                <span class="spinner-border spinner-border-sm me-2"></span>Creating…
+                                            </t>
+                                            <t t-else="">
+                                                <i class="fa fa-plus me-2"></i>Create My Session
+                                            </t>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- ═══ SESSION EXISTS ═══ -->
+                        <t t-else="">
+
+                            <!-- Status Card (full width top) -->
+                            <div class="col-12">
+                                <div t-attf-class="card border-0 shadow rounded-4 overflow-hidden">
+                                    <!-- Coloured Header Bar -->
+                                    <div t-attf-class="px-4 py-3 text-white d-flex align-items-center justify-content-between bg-#{statusColor}">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i t-attf-class="fa fa-#{state.status === 'ready' ? 'check-circle' : state.status === 'qr_ready' ? 'qrcode' : state.status === 'initializing' || state.status === 'authenticating' ? 'spinner fa-spin' : 'exclamation-triangle'} fs-3"></i>
+                                            <div>
+                                                <h5 class="mb-0 fw-bold" t-esc="statusLabel"></h5>
+                                                <span class="small opacity-75">Session: <strong t-esc="state.session_name"></strong></span>
+                                            </div>
+                                        </div>
+                                        <!-- Action Buttons in header -->
+                                        <div class="d-flex gap-2">
+                                            <t t-if="state.status === 'ready'">
+                                                <button class="btn btn-light btn-sm fw-bold" t-on-click="stopSession" t-att-disabled="state.actionLoading">
+                                                    <i class="fa fa-power-off me-1"></i> Disconnect
+                                                </button>
+                                            </t>
+                                            <t t-elif="state.status === 'not_created' or state.status === 'disconnected' or state.status === 'failed'">
+                                                <button class="btn btn-light btn-sm fw-bold" t-on-click="startSession" t-att-disabled="state.actionLoading">
+                                                    <t t-if="state.actionLoading"><span class="spinner-border spinner-border-sm me-1"></span></t>
+                                                    <i t-else="" class="fa fa-play me-1"></i> Start Engine
+                                                </button>
+                                            </t>
+                                            <t t-elif="state.status === 'qr_ready' or state.status === 'initializing' or state.status === 'authenticating'">
+                                                <button class="btn btn-outline-light btn-sm fw-bold" t-on-click="stopSession" t-att-disabled="state.actionLoading">
+                                                    Cancel / Stop
+                                                </button>
+                                            </t>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card Body -->
+                                    <div class="card-body bg-white p-4">
+
+                                        <!-- ── READY ── -->
+                                        <t t-if="state.status === 'ready'">
+                                            <div class="row align-items-center g-4">
+                                                <div class="col-auto">
+                                                    <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:72px;height:72px;">
+                                                        <i class="fa fa-whatsapp text-success" style="font-size:40px;"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="col">
+                                                    <h5 class="text-success fw-bold mb-1">Authenticated &amp; Ready</h5>
+                                                    <p class="text-muted mb-3">Your WhatsApp is connected. Messages sync in real-time.</p>
+                                                    <div class="row g-3">
+                                                        <div class="col-sm-4">
+                                                            <div class="bg-light rounded-3 p-3">
+                                                                <div class="text-muted small fw-bold mb-1">Display Name</div>
+                                                                <div class="text-dark fw-semibold" t-esc="state.push_name || '—'"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4">
+                                                            <div class="bg-light rounded-3 p-3">
+                                                                <div class="text-muted small fw-bold mb-1">Phone Number</div>
+                                                                <div class="text-dark fw-semibold" t-esc="state.phone || '—'"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4">
+                                                            <div class="bg-light rounded-3 p-3">
+                                                                <div class="text-muted small fw-bold mb-1">Session Name</div>
+                                                                <div class="text-dark fw-semibold font-monospace small" t-esc="state.session_name"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </t>
+
+                                        <!-- ── QR READY ── -->
+                                        <t t-elif="state.status === 'qr_ready'">
+                                            <div class="d-flex flex-column flex-md-row align-items-center gap-5">
+                                                <div class="text-center">
+                                                    <t t-if="state.qr_code">
+                                                        <div class="border border-2 border-success rounded-3 p-2 d-inline-block shadow-sm mb-2">
+                                                            <img t-att-src="state.qr_code" style="width:200px;height:200px;" alt="WhatsApp QR Code"/>
+                                                        </div>
+                                                        <p class="text-muted small mb-0">QR expires soon — scan now!</p>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <div class="spinner-border text-success mb-2" style="width:3rem;height:3rem;"></div>
+                                                        <p class="text-muted small">Generating QR code…</p>
+                                                    </t>
+                                                </div>
+                                                <div>
+                                                    <h5 class="fw-bold text-dark mb-2">Scan to Link Your WhatsApp</h5>
+                                                    <ol class="text-muted small mb-3 ps-3" style="line-height:2;">
+                                                        <li>Open <strong>WhatsApp</strong> on your phone</li>
+                                                        <li>Tap <strong>⋮ Menu → Linked Devices</strong></li>
+                                                        <li>Tap <strong>Link a Device</strong></li>
+                                                        <li>Point your camera at this QR code</li>
+                                                    </ol>
+                                                    <button class="btn btn-outline-success btn-sm fw-bold" t-on-click="() => this.refresh()">
+                                                        <i class="fa fa-refresh me-1"></i> Refresh QR
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </t>
+
+                                        <!-- ── INITIALIZING / AUTHENTICATING ── -->
+                                        <t t-elif="state.status === 'initializing' or state.status === 'authenticating'">
+                                            <div class="d-flex align-items-center gap-4 py-3">
+                                                <div class="spinner-border text-warning" style="width:3rem;height:3rem;" role="status"></div>
+                                                <div>
+                                                    <h5 class="fw-bold text-warning mb-1 text-capitalize" t-esc="state.status + '…'"></h5>
+                                                    <p class="text-muted mb-0">The NestJS server is launching a headless browser. This may take 15–30 seconds. The page will auto-update.</p>
+                                                </div>
+                                            </div>
+                                        </t>
+
+                                        <!-- ── DISCONNECTED / NOT_CREATED / FAILED ── -->
+                                        <t t-else="">
+                                            <div class="d-flex align-items-center gap-4 py-3">
+                                                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width:64px;height:64px;min-width:64px;">
+                                                    <i class="fa fa-unlink text-danger fs-2"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="fw-bold text-danger mb-1">Session Offline</h5>
+                                                    <p class="text-muted mb-0">The Puppeteer browser engine is not running. Click <strong>Start Engine</strong> in the top-right to begin connection.</p>
+                                                </div>
+                                            </div>
+                                        </t>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Danger Zone -->
+                            <div class="col-12">
+                                <div class="card border-0 border-top border-danger shadow-sm rounded-3 bg-white">
+                                    <div class="card-body px-4 py-3 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h6 class="fw-bold text-danger mb-1">Danger Zone</h6>
+                                            <p class="text-muted small mb-0">Permanently remove this session from the NestJS server. You'll need to re-scan QR to reconnect.</p>
+                                        </div>
+                                        <button class="btn btn-outline-danger btn-sm fw-bold"
+                                                t-on-click="deleteSession"
+                                                t-att-disabled="state.actionLoading">
+                                            <i class="fa fa-trash me-1"></i> Wipe Session
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </t>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Full-page loading overlay during actions -->
+            <t t-if="state.actionLoading">
+                <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background:rgba(255,255,255,0.6);z-index:9999;">
+                    <div class="spinner-border text-success" style="width:3rem;height:3rem;" role="status"></div>
+                </div>
+            </t>
+
+        </div>
+    </t>
+</templates>
